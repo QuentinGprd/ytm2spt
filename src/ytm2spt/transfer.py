@@ -1,5 +1,6 @@
 from .spotify import Spotify
 from .youtube import YoutubeMusic
+from ytmusicapi import OAuthCredentials
 from urllib import request
 import base64
 from .app_logger import setup_logger
@@ -12,7 +13,7 @@ def url_to_id(url: str, site: str) -> str:
                 return url.split(char)[1].split("&")[0]
         else:
             raise ValueError("Not a valid Youtube Playlist URL")
-    
+
     elif site == "sp":
         if "playlist/" in url:
             return url.split("playlist/")[1].split("?")[0]
@@ -29,13 +30,15 @@ def get_youtube_playlist_id(youtube_arg: str) -> str:
     return youtube_arg
 
 
-def get_spotify_playlist_id(spotify_arg: str, spotify_playlist_name: str, create_new: bool, dryrun: bool) -> str:
+def get_spotify_playlist_id(
+    spotify_arg: str, spotify_playlist_name: str, create_new: bool, dryrun: bool
+) -> str:
     if spotify_arg:
         for site in ["spotify.com", "spotify:"]:
             if site in spotify_arg:
                 return url_to_id(spotify_arg, "sp")
         return spotify_arg
-    
+
     elif spotify_playlist_name:
         if not create_new:
             user_playlists = sp.get_user_playlists()
@@ -43,7 +46,7 @@ def get_spotify_playlist_id(spotify_arg: str, spotify_playlist_name: str, create
                 if playlist["name"] == spotify_playlist_name:
                     return playlist["id"]
         return sp.create_playlist(spotify_playlist_name)
-    
+
     else:
         if not dryrun:
             return sp.create_playlist(yt.get_playlist_title())
@@ -63,9 +66,26 @@ def set_yt_thumbnail_as_sp_cover(dryrun: bool = False):
         sp.set_playlist_cover(encoded_img)
 
 
-def transfer_playlist(youtube_arg, spotify_arg, spotify_playlist_name, youtube_oauth, dryrun, create_new, limit):
+def transfer_playlist(
+    youtube_arg,
+    spotify_arg,
+    spotify_playlist_name,
+    youtube_oauth,
+    dryrun,
+    create_new,
+    limit,
+    youtube_client_id,
+    youtube_client_secret,
+):
     global yt, sp
-    yt = YoutubeMusic(youtube_oauth)
+    if youtube_oauth and youtube_client_id and youtube_client_secret:
+        oauth_creds = OAuthCredentials(
+            client_id=youtube_client_id, client_secret=youtube_client_secret
+        )
+        yt = YoutubeMusic(youtube_oauth, oauth_credentials=oauth_creds)
+    else:
+        yt = YoutubeMusic(youtube_oauth)
+
     sp = Spotify()
     ytm2spt_logger = setup_logger(__name__)
 
@@ -73,7 +93,7 @@ def transfer_playlist(youtube_arg, spotify_arg, spotify_playlist_name, youtube_o
     ytm2spt_logger.info(f"Youtube Playlist ID: {youtube_id}")
     yt.set_playlist_id(youtube_id)
     ytm2spt_logger.info(f"Youtube Playlist Name: {yt.get_playlist_title()}")
-    
+
     if dryrun:
         ytm2spt_logger.info("Dryrun mode enabled. No songs will be added to Spotify.")
         set_yt_thumbnail_as_sp_cover(dryrun=True)
@@ -81,7 +101,9 @@ def transfer_playlist(youtube_arg, spotify_arg, spotify_playlist_name, youtube_o
     else:
         if not (spotify_arg or spotify_playlist_name):
             spotify_playlist_name = yt.get_playlist_title()
-        spotify_id = get_spotify_playlist_id(spotify_arg, spotify_playlist_name, create_new, dryrun)
+        spotify_id = get_spotify_playlist_id(
+            spotify_arg, spotify_playlist_name, create_new, dryrun
+        )
         ytm2spt_logger.info(f"Spotify Playlist ID: {spotify_id}")
         sp.set_playlist_id(spotify_id)
         ytm2spt_logger.info(f"Spotify Playlist Name: {sp.get_playlist_name()}")
@@ -91,7 +113,9 @@ def transfer_playlist(youtube_arg, spotify_arg, spotify_playlist_name, youtube_o
             ytm2spt_logger.info("Set playlist cover from youtube thumbnail")
         except Exception as e:
             ytm2spt_logger.warning(str(e))
-            ytm2spt_logger.warning("Could not able to set playlist cover from youtube thumbnail")
+            ytm2spt_logger.warning(
+                "Could not able to set playlist cover from youtube thumbnail"
+            )
 
         if not create_new:
             sp.set_playlist_description()
@@ -102,7 +126,7 @@ def transfer_playlist(youtube_arg, spotify_arg, spotify_playlist_name, youtube_o
 
     songs = yt.get_songs_from_playlist(limit)
     ytm2spt_logger.info(f"Got {len(songs)} songs from Youtube Playlist")
-    
+
     total_songs_added = 0
     total_songs_found = 0
     songs_not_found = []
@@ -116,21 +140,20 @@ def transfer_playlist(youtube_arg, spotify_arg, spotify_playlist_name, youtube_o
             continue
         else:
             total_songs_found += 1
-        
+
         if dryrun:
             continue
-        
+
         was_added = sp.add_song_to_playlist(song_uri)
 
         if was_added:
-            ytm2spt_logger.info(
-                f'{song.artist} - {song.title} was added to playlist.')
+            ytm2spt_logger.info(f"{song.artist} - {song.title} was added to playlist.")
             total_songs_added += 1
-    
+
     if not dryrun:
-        ytm2spt_logger.info(f'Added {total_songs_added} songs out of {len(songs)}')
+        ytm2spt_logger.info(f"Added {total_songs_added} songs out of {len(songs)}")
     else:
-        ytm2spt_logger.info(f'Found {total_songs_found} songs out of {len(songs)}')
-    
+        ytm2spt_logger.info(f"Found {total_songs_found} songs out of {len(songs)}")
+
     if songs_not_found:
         ytm2spt_logger.warning(f"Songs not found:\n{chr(10).join(songs_not_found)}")

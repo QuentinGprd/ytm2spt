@@ -1,5 +1,7 @@
 import argparse
 from .transfer import transfer_playlist
+import os
+
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -33,7 +35,7 @@ def get_args():
         type=str,
         default=None,
         required=False,
-        help="Youtube OAuth JSON filepath (run 'ytmusicapi-oauth')"
+        help="Youtube OAuth JSON filepath (run 'ytmusicapi-oauth')",
     )
     run_group = parser.add_mutually_exclusive_group(required=False)
     run_group.add_argument(
@@ -70,7 +72,15 @@ def get_args():
     create_new = args.create_new
     limit = args.limit
 
-    return youtube, spotify, spotify_playlist_name, youtube_oauth, dryrun, create_new, limit
+    return (
+        youtube,
+        spotify,
+        spotify_playlist_name,
+        youtube_oauth,
+        dryrun,
+        create_new,
+        limit,
+    )
 
 
 def oauth():
@@ -100,15 +110,32 @@ def oauth():
     open_browser = args.open_browser
     if open_browser is None:
         open_browser = True
-        if platform.system() == "Linux" and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        if platform.system() == "Linux" and not (
+            os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")
+        ):
             open_browser = False
-    
+
     print(file)
     setup_oauth(filepath=file, open_browser=open_browser)
 
 
 def main():
-    transfer_playlist(*get_args())
+    args = get_args()
+
+    youtube_client_id = os.environ.get("YOUTUBE_CLIENT_ID")
+    youtube_client_secret = os.environ.get("YOUTUBE_CLIENT_SECRET")
+
+    transfer_playlist(
+        args.youtube_url_or_id,
+        args.spotify_url_or_id,
+        args.spotify_playlist_name,
+        args.youtube_oauth_json,
+        args.dryrun,
+        args.create_new,
+        args.limit,
+        youtube_client_id,
+        youtube_client_secret,
+    )
 
 
 if __name__ == "__main__":

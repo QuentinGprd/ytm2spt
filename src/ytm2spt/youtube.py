@@ -1,8 +1,9 @@
-from ytmusicapi import YTMusic
+from ytmusicapi import YTMusic, OAuthCredentials
 from dataclasses import dataclass
 import re
 import requests
 from .app_logger import setup_logger
+
 
 @dataclass
 class Song:
@@ -12,28 +13,35 @@ class Song:
 
 def clean_song_info(song: Song) -> Song:
     artist, title = song.artist, song.title
-    title = re.sub(r'\(.*', '', title)          # Remove everything after '(' including '('
-    title = re.sub(r'ft.*', '', title)          # Remove everything after 'ft' including 'ft'
-    title = re.sub(r',.*', '', title)           # Remove everything after ',' including ','
-    artist = re.sub(r'\sx\s.*', '', artist)     # Remove everything after ' x ' including ' x '
-    artist = re.sub(r'\(.*', '', artist)        # Remove everything after '(' including '('
-    artist = re.sub(r'ft.*', '', artist)        # Remove everything after 'ft' including 'ft'
-    artist = re.sub(r',.*', '', artist)         # Remove everything after ',' including ','
+    title = re.sub(r"\(.*", "", title)  # Remove everything after '(' including '('
+    title = re.sub(r"ft.*", "", title)  # Remove everything after 'ft' including 'ft'
+    title = re.sub(r",.*", "", title)  # Remove everything after ',' including ','
+    artist = re.sub(
+        r"\sx\s.*", "", artist
+    )  # Remove everything after ' x ' including ' x '
+    artist = re.sub(r"\(.*", "", artist)  # Remove everything after '(' including '('
+    artist = re.sub(r"ft.*", "", artist)  # Remove everything after 'ft' including 'ft'
+    artist = re.sub(r",.*", "", artist)  # Remove everything after ',' including ','
     return Song(artist.strip(), title.strip())  # Remove whitespaces from start and end
 
 
 class YoutubeMusic:
-    def __init__(self, oauth_json: str = None):
+    def __init__(self, oauth_json: str = None, oauth_credentials=None):
         self.playlist_id = ""
         self.playlist = {}
         self.songs = []
         self.yt_logger = setup_logger(__name__)
-        self.ytmusic = YTMusic(oauth_json)
+        if oauth_json and oauth_credentials:
+            self.ytmusic = YTMusic(oauth_json, oauth_credentials=oauth_credentials)
+        elif oauth_json:
+            self.ytmusic = YTMusic(oauth_json)
+        else:
+            self.ytmusic = YTMusic()
 
     def __fetch_playlist(self) -> dict:
         result = self.ytmusic.get_playlist(self.playlist_id, limit=None)
         return result
-    
+
     def set_playlist_id(self, playlist_id: str):
         self.playlist_id = playlist_id
         self.playlist = self.__fetch_playlist()
@@ -51,13 +59,13 @@ class YoutubeMusic:
             self.songs.append(song)
         return self.songs
 
-    def get_playlist_title(self):       
+    def get_playlist_title(self):
         return self.playlist["title"]
-    
+
     def get_playlist_thumbnail(self):
         for thumbnails in reversed(self.playlist["thumbnails"]):
             res = requests.head(thumbnails["url"])
-            if int(res.headers['content-length']) < 200*1024:
+            if int(res.headers["content-length"]) < 200 * 1024:
                 return thumbnails["url"]
         self.yt_logger("No Thumbnail found which can be used as Playlist Cover")
 

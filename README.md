@@ -16,7 +16,6 @@
    <img src="https://raw.githubusercontent.com/abhishekmj303/ytm2spt/refs/heads/main/media/app_ui.png">
 </p>
 
-
 ## Features
 
 - [x] No limit on size of playlist
@@ -28,7 +27,6 @@
 - [ ] Copy playlist description from youtube to spotify
 - [x] Limit number of songs to be imported in the playlist
 - [x] Dry run mode to test without adding to spotify
-
 
 ## Setup
 
@@ -47,6 +45,18 @@ By setting up a Developer account and creating your own credentials (like keys),
 4. Copy the "User ID" from your Spotify account: https://www.spotify.com/in-en/account/profile/
    ![Spotify username](https://raw.githubusercontent.com/abhishekmj303/ytm2spt/refs/heads/main/media/spotify_username.png)
 
+### YouTube Developer Account
+
+**Why?**
+
+As of November 2024, YouTube Music requires a Client Id and Secret for the YouTube Data API to connect to the API.
+
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
+2. Create a new project.
+3. Go to "APIs & Services" > "Credentials".
+4. Click "Create Credentials" and select "OAuth client ID".
+5. Select "TVs and Limited Input devices" as the application type.
+6. Copy the "Client ID" and "Client Secret" to use later.
 
 ## Installation
 
@@ -60,9 +70,7 @@ Download the latest version from the following links:
   </tr>
 </table>
 
-
-> [!NOTE]<br>
-> **Windows**: Windows Defender may interrupt the app from running. Click on more info and allow the program to run.
+> [!NOTE]<br> > **Windows**: Windows Defender may interrupt the app from running. Click on more info and allow the program to run.
 >
 > **Linux**: You need to run the app from terminal, if you want the to know the progress of the transfer.
 
@@ -88,7 +96,6 @@ After installation, you can run the app using the command `ytm2spt`.
 > [!CAUTION]<br>
 > While syncing into an existing spotify playlist, first all the songs from Stopify playlist will be deleted and then the all the songs from YouTube Music playlist will be copied.
 
-
 ### Spotify Settings
 
 When you run the executable, you will be prompted to enter your Spotify credentials.
@@ -101,7 +108,6 @@ If you click on "Private Playlist", you will be prompted to enter get your Youtu
 
 ![Youtube Settings](media/youtube_ui.png)
 
-
 > [!TIP]<br>
 > If you find this project useful or interesting, please consider giving it a 🌟star! It helps others discover it too!
 
@@ -112,11 +118,13 @@ If you click on "Private Playlist", you will be prompted to enter get your Youtu
 Python3 is required to run the app. You can download it from [python.org](https://www.python.org/downloads/) for Windows.
 
 ### Install Dependencies
+
 ```sh
 pip install .
 ```
 
 ### Run the App
+
 ```sh
 python ytm2spt.py
 ```
@@ -127,8 +135,14 @@ python ytm2spt.py
 
 1. Rename the file `.env.sample` to `.env`
 2. Edit the file by adding your credentials
+   ```sh
+   SPOTIFY_USER_ID=<your_user_id>
+   SPOTIFY_CLIENT_ID=<your_client_id>
+   SPOTIFY_CLIENT_SECRET=<your_client_secret>
+   YOUTUBE_CLIENT_ID=<your_youtube_client_id>
+   YOUTUBE_CLIENT_SECRET=<your_youtube_client_secret>
+   ```
 3. Run the following command to set your environment variable: `source .env`
-
 
 ### Setting Environment Variables (Windows)
 
@@ -137,16 +151,19 @@ python ytm2spt.py
    set SPOTIFY_USER_ID=<your_user_id>
    set SPOTIFY_CLIENT_ID=<your_client_id>
    set SPOTIFY_CLIENT_SECRET=<your_client_secret>
+   set YOUTUBE_CLIENT_ID=<your_youtube_client_id>
+   set YOUTUBE_CLIENT_SECRET=<your_youtube_client_secret>
    ```
-2. Run the batch file to set your environment variable: 
+2. Run the batch file to set your environment variable:
    ```bat
    env.bat
    ```
 
->[!NOTE]<br>
+> [!NOTE]<br>
 > If the environment variables are not set, you may need to restart your terminal or IDE.
 
 ### Install Dependencies
+
 ```sh
 pip install -r requirements.txt
 ```
@@ -154,6 +171,7 @@ pip install -r requirements.txt
 ### Youtube OAuth (Only for private playlists)
 
 Run the following command to login to your Youtube account and save the credentials to `ytmusicapi-oauth.json`
+
 ```sh
 ytmusicapi-oauth
 ```
@@ -223,12 +241,12 @@ $ python ytm2spt.py -yt "CLAK5uy_lBNUteBRencHzKelu5iDHwLF6mYqjL-JU" -sp "https:/
 $ python ytm2spt.py -yt "https://www.youtube.com/watch?v=RlPNh_PBZb4&list=RDCLAK5uy_lBNUteBRencHzKelu5iDHwLF6mYqjL-JU" -n
 ```
 
-
 ## Build an Executable
 
 **Note:** This is only required if you want to build the executable yourself. This is not necessary if you just need to run the app directly using Python.
 
 **Requirements:**
+
 - C Compiler (gcc, clang)
 - `patchelf` (Linux only)
 - `python3-devel` or similar package in your OS
@@ -237,7 +255,6 @@ $ python ytm2spt.py -yt "https://www.youtube.com/watch?v=RlPNh_PBZb4&list=RDCLAK
 pip install -r requirements-dev.txt
 nuitka ytm2spt.py
 ```
-
 
 > [!NOTE]<br>
 > Forked from @edgarh22's [Youtube-to-Spotify-Archiver](https://github.com/edgarh92/Youtube-to-Spotify-Archiver).
